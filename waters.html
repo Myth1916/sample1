@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Water pH Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{min-height:100vh;background:#060a14;font-family:'Share Tech Mono',monospace;color:#fff;display:flex;flex-direction:column;align-items:center;padding:36px 16px 48px;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,200,255,.012) 2px,rgba(0,200,255,.012) 4px);pointer-events:none;z-index:0}
+  .header{text-align:center;margin-bottom:32px;position:relative;z-index:1}
+  .header-sub{color:#1a3a5a;font-size:10px;letter-spacing:8px;margin-bottom:8px}
+  h1{font-family:'Orbitron',monospace;font-size:clamp(22px,5vw,44px);font-weight:900;letter-spacing:4px}
+  h1 span{transition:color .5s}
+  .hline{width:100px;height:1px;margin:10px auto 0;transition:background .5s}
+  .layout{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;width:100%;max-width:960px;position:relative;z-index:1}
+  .col-l{flex:1 1 290px;max-width:370px;display:flex;flex-direction:column;align-items:center;gap:14px}
+  .col-r{flex:1 1 290px;max-width:520px;display:flex;flex-direction:column;gap:14px}
+  .orb{width:190px;height:190px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;position:relative;border:3px solid;transition:border-color .5s,box-shadow .5s,background .5s;animation:op 2.5s ease-in-out infinite}
+  @keyframes op{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
+  .orb-val{font-family:'Orbitron',monospace;font-size:50px;font-weight:900;z-index:2;transition:text-shadow .5s}
+  .orb-lbl{font-size:9px;letter-spacing:6px;color:rgba(255,255,255,.5);z-index:2;margin-top:2px}
+  .bubble{position:absolute;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);animation:rise linear infinite;pointer-events:none}
+  @keyframes rise{0%{transform:translateY(0);opacity:.5}100%{transform:translateY(-120px);opacity:0}}
+  .badge{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 20px;border-radius:6px;border:1px solid;font-weight:700;font-size:12px;letter-spacing:3px;transition:all .5s;width:100%}
+  .slider-wrap{width:100%}
+  .slider-labels{display:flex;justify-content:space-between;font-size:9px;color:#1e2a3a;letter-spacing:1px;margin-bottom:6px}
+  input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:linear-gradient(to right,#FF0000,#FFFF00 30%,#00CC44 50%,#0066FF 75%,#CC0077);outline:none;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#fff;cursor:pointer;transition:box-shadow .3s}
+  .irow{display:flex;gap:10px;align-items:center;width:100%}
+  .irow label{font-size:9px;letter-spacing:2px;color:#1e2a3a;white-space:nowrap}
+  .phi{flex:1;background:#0a1020;border:1px solid;color:#fff;padding:8px 11px;border-radius:4px;font-family:inherit;font-size:14px;outline:none;transition:border-color .5s}
+  .cat{width:100%;text-align:center;padding:13px;border-radius:6px;border:1px solid;transition:all .5s}
+  .cat-name{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;transition:color .5s}
+  .cat-desc{font-size:10px;color:#445;margin-top:4px}
+  .abtn{width:100%;padding:13px;border-radius:6px;border:1px solid;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;letter-spacing:3px;cursor:pointer;transition:all .3s;color:#fff}
+  .abtn:hover:not(:disabled){filter:brightness(1.3);transform:scale(1.02)}
+  .abtn:active:not(:disabled){transform:scale(.98)}
+  .abtn:disabled{cursor:not-allowed;color:#2a3a4a}
+  .panel{background:#0a1020;border:1px solid #0f1a2e;border-radius:8px;padding:18px}
+  .ptitle{font-size:9px;letter-spacing:5px;color:#1a3a5a;margin-bottom:12px}
+  .specbar{display:flex;height:22px;border-radius:3px;overflow:hidden;margin-bottom:4px}
+  .sseg{flex:1;transition:opacity .3s,transform .3s;transform-origin:center}
+  .sarrow-row{position:relative;height:16px}
+  .sarrow{position:absolute;transform:translateX(-50%);transition:left .3s;font-size:12px;color:#fff}
+  .snums{display:flex;justify-content:space-between;font-size:9px;color:#111d2e;margin-top:3px}
+  .igrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .icell{background:#0a1020;border-radius:6px;padding:11px 13px;border:1px solid #0f1a2e;transition:border-color .5s}
+  .icell.hi{border-color:#00CC4433}
+  .iclbl{font-size:9px;letter-spacing:2px;color:#111d2e;margin-bottom:4px}
+  .icval{font-family:'Orbitron',monospace;font-weight:700;font-size:12px;color:#889;transition:color .5s}
+  .icell.hi .icval{color:#00CC44}
+  .ai-out{flex:1;min-height:210px}
+  .ai-empty{color:#111d2e;text-align:center;margin-top:44px;font-size:12px;line-height:2.2}
+  .ai-icon{font-size:28px;margin-bottom:8px;opacity:.3}
+  .ai-loading{color:#1a3a5a;text-align:center;margin-top:60px;letter-spacing:4px;font-size:10px}
+  .ai-err{color:#FF4422;font-size:12px}
+  .ai-res{font-size:12px;line-height:1.9;animation:fi .5s ease}
+  @keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .ah{font-family:'Orbitron',monospace;font-weight:700;font-size:10px;letter-spacing:1px;margin-top:10px;transition:color .5s}
+  .ab{color:#556}
+  .footer{margin-top:38px;color:#080f1c;font-size:9px;letter-spacing:5px;z-index:1}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-sub">HYDRO ANALYSIS SYSTEM</div>
+  <h1>WATER <span id="acc">pH</span> MONITOR</h1>
+  <div class="hline" id="hline"></div>
+</div>
+
+<div class="layout">
+  <div class="col-l">
+    <div class="orb" id="orb">
+      <div class="orb-val" id="oval">7.0</div>
+      <div class="orb-lbl">pH LEVEL</div>
+    </div>
+    <div class="badge" id="badge">
+      <span id="bicon">✓</span>
+      <span id="btext">SAFE TO DRINK</span>
+    </div>
+    <div class="slider-wrap">
+      <div class="slider-labels"><span>0 ACID</span><span>7 NEUTRAL</span><span>14 BASE</span></div>
+      <input type="range" id="sl" min="0" max="14" step="0.1" value="7">
+    </div>
+    <div class="irow">
+      <label>ENTER pH:</label>
+      <input type="number" class="phi" id="pi" min="0" max="14" step="0.01" value="7.0">
+    </div>
+    <div class="cat" id="cat">
+      <div class="cat-name" id="cname">Pure Water</div>
+      <div class="cat-desc" id="cdesc">Perfectly neutral. Ideal.</div>
+    </div>
+    <button class="abtn" id="abtn">&#9654;&nbsp; AI DEEP ANALYSIS</button>
+  </div>
+
+  <div class="col-r">
+    <div class="panel">
+      <div class="ptitle">pH SPECTRUM</div>
+      <div class="specbar" id="specbar"></div>
+      <div class="sarrow-row"><div class="sarrow" id="sarrow">▲</div></div>
+      <div class="snums"><span>0</span><span>2</span><span>4</span><span>6</span><span>7</span><span>8</span><span>10</span><span>12</span><span>14</span></div>
+    </div>
+    <div class="igrid">
+      <div class="icell"><div class="iclbl">CATEGORY</div><div class="icval" id="ic1">Pure Water</div></div>
+      <div class="icell"><div class="iclbl">TYPE</div><div class="icval" id="ic2">NEUTRAL</div></div>
+      <div class="icell"><div class="iclbl">WHO SAFE RANGE</div><div class="icval">6.5 – 8.5</div></div>
+      <div class="icell hi"><div class="iclbl">YOUR READING</div><div class="icval" id="ic4">7.00</div></div>
+    </div>
+    <div class="panel ai-out">
+      <div class="ptitle">AI ANALYSIS OUTPUT</div>
+      <div id="aout"><div class="ai-empty"><div class="ai-icon">◉</div>Press <span style="color:#1a3a5a">AI DEEP ANALYSIS</span><br>for a detailed water quality report</div></div>
+    </div>
+  </div>
+</div>
+<div class="footer">HYDRO ANALYSIS SYSTEM v2.0 — FOR EDUCATIONAL USE</div>
+
+<script>
+const PD=[
+  {r:[0,1],l:"Battery Acid",c:"#FF0000",d:"Extremely acidic. Dangerous."},
+  {r:[1,2],l:"Gastric Acid",c:"#FF3300",d:"Very strongly acidic."},
+  {r:[2,3],l:"Lemon Juice",c:"#FF6600",d:"Strongly acidic. Citrus range."},
+  {r:[3,4],l:"Vinegar",c:"#FF9900",d:"Moderately acidic."},
+  {r:[4,5],l:"Acid Rain",c:"#FFCC00",d:"Weakly acidic. Polluted water."},
+  {r:[5,6],l:"Coffee",c:"#CCCC00",d:"Mildly acidic."},
+  {r:[6,7],l:"Slightly Acidic",c:"#99CC00",d:"Near neutral, mild acidity."},
+  {r:[7,7.1],l:"Pure Water",c:"#00CC44",d:"Perfectly neutral. Ideal."},
+  {r:[7.1,8],l:"Slightly Alkaline",c:"#00BBAA",d:"Mildly basic. Good for drinking."},
+  {r:[8,9],l:"Sea Water",c:"#0099CC",d:"Moderately alkaline."},
+  {r:[9,10],l:"Baking Soda",c:"#0066FF",d:"Strongly alkaline."},
+  {r:[10,11],l:"Milk of Magnesia",c:"#3333FF",d:"Very alkaline."},
+  {r:[11,12],l:"Ammonia",c:"#6600CC",d:"Highly alkaline. Caustic."},
+  {r:[12,13],l:"Bleach",c:"#9900AA",d:"Extremely alkaline. Harmful."},
+  {r:[13,14.1],l:"Drain Cleaner",c:"#CC0077",d:"Most alkaline. Dangerous."},
+];
+function info(ph){for(const d of PD)if(ph>=d.r[0]&&ph<d.r[1])return d;return PD[PD.length-1]}
+function drink(ph){
+  if(ph>=6.5&&ph<=8.5)return{t:"SAFE TO DRINK",i:"✓",c:"#00CC44"};
+  if((ph>=5.5&&ph<6.5)||(ph>8.5&&ph<=9.5))return{t:"BORDERLINE SAFE",i:"⚠",c:"#FFAA00"};
+  return{t:"UNSAFE TO DRINK",i:"✗",c:"#FF3300"};
+}
+
+// Build spectrum
+const sb=document.getElementById('specbar');
+PD.forEach((d,i)=>{
+  const s=document.createElement('div');
+  s.className='sseg';s.style.background=d.c;s.style.opacity='.28';s.dataset.i=i;
+  sb.appendChild(s);
+});
+
+// Bubbles
+const orb=document.getElementById('orb');
+for(let i=0;i<12;i++){
+  const b=document.createElement('div');b.className='bubble';
+  const sz=6+Math.random()*12;
+  b.style.cssText=`width:${sz}px;height:${sz}px;left:${5+Math.random()*85}%;bottom:${Math.random()*20}%;animation-duration:${2+Math.random()*2}s;animation-delay:${Math.random()*3}s`;
+  orb.appendChild(b);
+}
+
+let cur=7,animPh=7,af;
+function animTo(t){
+  const from=animPh;let st=null;
+  if(af)cancelAnimationFrame(af);
+  function step(ts){
+    if(!st)st=ts;
+    const p=Math.min((ts-st)/500,1),e=1-Math.pow(1-p,3);
+    animPh=from+(t-from)*e;
+    renderVis(animPh);
+    if(p<1)af=requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function renderVis(ph){
+  const nfo=info(ph),wc=nfo.c;
+  document.getElementById('oval').textContent=ph.toFixed(1);
+  document.getElementById('oval').style.textShadow=`0 0 20px ${wc}`;
+  orb.style.borderColor=wc;
+  orb.style.background=`radial-gradient(circle at 38% 32%,${wc}cc,${wc}44 55%,${wc}18)`;
+  orb.style.boxShadow=`0 0 40px ${wc}44,inset 0 0 30px rgba(0,0,0,.4)`;
+  document.querySelectorAll('[type=range]')[0].style.cssText+=``;
+  document.querySelectorAll('input[type=range]::-webkit-slider-thumb');
+  document.getElementById('acc').style.color=wc;
+  document.getElementById('hline').style.background=`linear-gradient(to right,transparent,${wc},transparent)`;
+  document.getElementById('abtn').style.borderColor=`${wc}55`;
+  document.getElementById('abtn').style.background=`${wc}15`;
+  document.getElementById('cat').style.borderColor=`${wc}33`;
+  document.getElementById('cat').style.background=`${wc}0e`;
+  document.getElementById('cname').style.color=wc;
+  document.getElementById('pi').style.borderColor=`${wc}44`;
+  document.querySelector('.icell.hi').style.borderColor=`${wc}44`;
+  document.getElementById('ic4').style.color=wc;
+  const segs=sb.querySelectorAll('.sseg');
+  segs.forEach((s,i)=>{
+    const act=ph>=PD[i].r[0]&&ph<PD[i].r[1];
+    s.style.opacity=act?'1':'.28';
+    s.style.transform=act?'scaleY(1.4)':'scaleY(1)';
+  });
+  document.getElementById('sarrow').style.left=`${(ph/14)*100}%`;
+}
+
+function updateAll(ph){
+  cur=ph;
+  const nfo=info(ph),dr=drink(ph);
+  document.getElementById('sl').value=ph;
+  document.getElementById('pi').value=ph.toFixed(2);
+  document.getElementById('cname').textContent=nfo.l;
+  document.getElementById('cdesc').textContent=nfo.d;
+  const badge=document.getElementById('badge');
+  badge.style.color=dr.c;badge.style.borderColor=`${dr.c}55`;badge.style.background=`${dr.c}14`;
+  document.getElementById('bicon').textContent=dr.i;
+  document.getElementById('btext').textContent=dr.t;
+  document.getElementById('ic1').textContent=nfo.l;
+  document.getElementById('ic2').textContent=ph<6.99?'ACIDIC':ph>7.05?'ALKALINE':'NEUTRAL';
+  document.getElementById('ic4').textContent=ph.toFixed(2);
+  animTo(ph);
+  resetOutput();
+}
+
+function resetOutput(){
+  document.getElementById('aout').innerHTML=`<div class="ai-empty"><div class="ai-icon">◉</div>Press <span style="color:#1a3a5a">AI DEEP ANALYSIS</span><br>for a detailed water quality report</div>`;
+}
+
+document.getElementById('sl').addEventListener('input',e=>updateAll(parseFloat(e.target.value)));
+document.getElementById('pi').addEventListener('input',e=>{
+  const v=parseFloat(e.target.value);
+  if(!isNaN(v)&&v>=0&&v<=14)updateAll(v);
+});
+
+document.getElementById('abtn').addEventListener('click',async()=>{
+  const btn=document.getElementById('abtn'),out=document.getElementById('aout');
+  btn.disabled=true;btn.textContent='ANALYZING...';
+  out.innerHTML='<div class="ai-loading">PROCESSING...</div>';
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        messages:[{role:'user',content:`You are a water quality expert. Analyze water with pH ${cur.toFixed(2)}. Give a concise report with exactly these 4 labeled sections:\nAssessment: (one sentence)\nDrinkability: (safe/unsafe, one sentence)\nCommon Sources: (2-3 real sources)\nRecommendation: (one practical action)`}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content?.find(b=>b.type==='text')?.text||'No analysis.';
+    const wc=info(cur).c;
+    const heads=['Assessment:','Drinkability:','Common Sources:','Recommendation:'];
+    const html=text.split('\n').map((line,i)=>{
+      const isH=heads.some(h=>line.trim().startsWith(h));
+      return isH?`<div class="ah" style="color:${wc};${i>0?'margin-top:10px':''}">${line}</div>`:`<div class="ab">${line}</div>`;
+    }).join('');
+    out.innerHTML=`<div class="ai-res">${html}</div>`;
+  }catch{
+    out.innerHTML='<div class="ai-err">Analysis failed. Please try again.</div>';
+  }
+  btn.disabled=false;btn.innerHTML='&#9654;&nbsp; AI DEEP ANALYSIS';
+});
+
+renderVis(7);updateAll(7);resetOutput();
+</script>
+</body>
+</html>
